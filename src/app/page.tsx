@@ -2,6 +2,7 @@
 
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { REAL_TASKS, REAL_CLIENTS, REAL_TEAM } from "@/lib/data";
 import {
   Activity,
   ArrowUpDown,
@@ -47,7 +48,7 @@ import {
 } from "lucide-react";
 
 type AppState = "board" | "clients" | "docs" | "chat" | "team" | "dashboards" | "forms";
-type TaskStatus = "todo" | "planning" | "in_progress" | "risk" | "done";
+export type TaskStatus = "a_fazer" | "planejamento" | "em_andamento" | "em_espera" | "concluida" | "backlog" | "cancelada";
 type Priority = "low" | "medium" | "high" | "urgent";
 type ClientStage = "lead" | "qualified" | "proposal" | "won" | "lost";
 type SyncStatus = "local" | "loading" | "synced" | "error";
@@ -59,7 +60,7 @@ type TaskComment = {
   createdAt: string;
 };
 
-type CrmTask = {
+export type CrmTask = {
   id: string;
   title: string;
   client: string;
@@ -72,11 +73,13 @@ type CrmTask = {
   createdAt: string;
   updatedAt: string;
   comments: TaskComment[];
+  clickupUrl?: string;
 };
 
-type ClientRecord = {
+export type ClientRecord = {
   id: string;
   name: string;
+  tipo?: string;
   contact: string;
   email: string;
   phone: string;
@@ -96,7 +99,7 @@ type DocRecord = {
   updatedAt: string;
 };
 
-type TeamMember = {
+export type TeamMember = {
   id: string;
   name: string;
   role: string;
@@ -135,11 +138,13 @@ type FormRecord = {
 };
 
 const TASK_STATUSES: Array<{ id: TaskStatus; label: string; className: string }> = [
-  { id: "todo", label: "TO DO", className: "status-todo" },
-  { id: "planning", label: "PLANEJAMENTO", className: "status-planning" },
-  { id: "in_progress", label: "EM ANDAMENTO", className: "status-inprogress" },
-  { id: "risk", label: "RISCO", className: "status-risk" },
-  { id: "done", label: "CONCLUIDO", className: "status-done" },
+  { id: "a_fazer", label: "A FAZER", className: "status-todo" },
+  { id: "planejamento", label: "PLANEJAMENTO", className: "status-planning" },
+  { id: "em_andamento", label: "EM ANDAMENTO", className: "status-inprogress" },
+  { id: "em_espera", label: "EM ESPERA", className: "status-risk" },
+  { id: "concluida", label: "CONCLUÍDA", className: "status-done" },
+  { id: "backlog", label: "BACKLOG", className: "status-planning" },
+  { id: "cancelada", label: "CANCELADA", className: "status-risk" },
 ];
 
 const PRIORITIES: Priority[] = ["low", "medium", "high", "urgent"];
@@ -154,96 +159,9 @@ const CLIENT_STAGES: Array<{ id: ClientStage; label: string }> = [
 
 const WORKSPACE_ID = "grx-intelligence";
 
-const DEFAULT_TASKS: CrmTask[] = [
-  {
-    id: "task-crm-clickup",
-    title: "Criar CRM GRX Intelligence",
-    client: "GRX Intelligence",
-    assignee: "Gustavo Roque",
-    status: "in_progress",
-    priority: "high",
-    dueDate: "2026-05-20",
-    description: "Transformar o prototipo em um CRM com CRUD, pipeline, documentos e painel.",
-    tag: "GRX",
-    createdAt: "2026-05-17T20:00:00.000Z",
-    updatedAt: "2026-05-17T22:00:00.000Z",
-    comments: [
-      {
-        id: "comment-1",
-        author: "Gustavo Roque",
-        body: "Base criada no Gemini/Antigravity e separada do ERP Notas.",
-        createdAt: "2026-05-17T22:15:00.000Z",
-      },
-    ],
-  },
-  {
-    id: "task-pipeline",
-    title: "Configurar pipeline comercial",
-    client: "Roque Shop",
-    assignee: "Danielle",
-    status: "planning",
-    priority: "medium",
-    dueDate: "2026-05-23",
-    description: "Criar etapas, campos e playbook de acompanhamento para clientes.",
-    tag: "CRM",
-    createdAt: "2026-05-17T19:00:00.000Z",
-    updatedAt: "2026-05-17T21:00:00.000Z",
-    comments: [],
-  },
-  {
-    id: "task-supabase",
-    title: "Modelar tabelas do Supabase",
-    client: "GRX Intelligence",
-    assignee: "Leonardo Avallone",
-    status: "todo",
-    priority: "urgent",
-    dueDate: "2026-05-19",
-    description: "Definir schema, RLS e politicas antes de levar o CRUD para producao.",
-    tag: "DB",
-    createdAt: "2026-05-17T18:00:00.000Z",
-    updatedAt: "2026-05-17T18:30:00.000Z",
-    comments: [],
-  },
-];
+const DEFAULT_TASKS: CrmTask[] = REAL_TASKS;
 
-const DEFAULT_CLIENTS: ClientRecord[] = [
-  {
-    id: "client-grx",
-    name: "GRX Intelligence",
-    contact: "Gustavo Roque",
-    email: "contato@grxintelligence.com",
-    phone: "(11) 99999-0000",
-    stage: "won",
-    value: 18000,
-    owner: "Gustavo Roque",
-    notes: "Workspace interno para operacao comercial, tarefas e documentacao.",
-    updatedAt: "2026-05-17T22:00:00.000Z",
-  },
-  {
-    id: "client-roque-shop",
-    name: "Roque Shop",
-    contact: "Danielle",
-    email: "danielle@example.com",
-    phone: "(11) 98888-0000",
-    stage: "proposal",
-    value: 7200,
-    owner: "Danielle",
-    notes: "Proposta de automacao e dashboard comercial.",
-    updatedAt: "2026-05-16T13:00:00.000Z",
-  },
-  {
-    id: "client-visa-x",
-    name: "Visa X Consulting",
-    contact: "Leonardo Avallone",
-    email: "leo@example.com",
-    phone: "(11) 97777-0000",
-    stage: "qualified",
-    value: 12500,
-    owner: "Leonardo Avallone",
-    notes: "Cliente qualificado aguardando escopo final.",
-    updatedAt: "2026-05-15T10:00:00.000Z",
-  },
-];
+const DEFAULT_CLIENTS: ClientRecord[] = REAL_CLIENTS;
 
 const DEFAULT_DOCS: DocRecord[] = [
   {
@@ -265,11 +183,7 @@ const DEFAULT_DOCS: DocRecord[] = [
   },
 ];
 
-const DEFAULT_TEAM: TeamMember[] = [
-  { id: "member-gustavo", name: "Gustavo Roque", role: "Owner", email: "gustavo@grxintelligence.com", status: "online" },
-  { id: "member-danielle", name: "Danielle", role: "CRM Ops", email: "danielle@example.com", status: "busy" },
-  { id: "member-leonardo", name: "Leonardo Avallone", role: "Desenvolvimento", email: "leonardo@example.com", status: "offline" },
-];
+const DEFAULT_TEAM: TeamMember[] = REAL_TEAM;
 
 const DEFAULT_MESSAGES: ChatMessage[] = [
   {
@@ -533,7 +447,7 @@ export default function CrmGrxWorkspace() {
       ...task,
       id: createId("task"),
       title: `${task.title} (copia)`,
-      status: "todo",
+      status: "a_fazer",
       createdAt: nowIso(),
       updatedAt: nowIso(),
       comments: [],
@@ -780,7 +694,7 @@ export default function CrmGrxWorkspace() {
     const card: DashboardCard = {
       id: createId("card"),
       title: "Metrica personalizada",
-      value: String(tasks.filter((task) => task.status !== "done").length),
+      value: String(tasks.filter((task) => task.status !== "concluida" && task.status !== "cancelada").length),
     };
     setDashboardCards((currentCards) => [card, ...currentCards]);
     notify("Card adicionado ao dashboard.");
@@ -794,7 +708,7 @@ export default function CrmGrxWorkspace() {
   const filteredTasks = useMemo(() => {
     const query = taskSearch.toLowerCase();
     return tasks
-      .filter((task) => showClosed || task.status !== "done")
+      .filter((task) => showClosed || (task.status !== "concluida" && task.status !== "cancelada"))
       .filter((task) => {
         const haystack = `${task.title} ${task.client} ${task.assignee} ${task.tag}`.toLowerCase();
         return haystack.includes(query);
@@ -844,7 +758,7 @@ export default function CrmGrxWorkspace() {
         docs={docs}
         forms={forms}
         onNavigate={openApp}
-        onCreateTask={() => setTaskModal({ mode: "create", status: "todo" })}
+        onCreateTask={() => setTaskModal({ mode: "create", status: "a_fazer" })}
         onCreateClient={() => setClientModal({ mode: "create" })}
         onCreateDoc={() => createDoc()}
         onCreateForm={() => setFormModal({ mode: "create" })}
@@ -1084,8 +998,8 @@ function WorkspaceSidebar({
   onCreateDoc: () => void;
   onCreateForm: () => void;
 }) {
-  const overdueCount = tasks.filter((task) => task.dueDate && task.status !== "done" && new Date(task.dueDate) < new Date()).length;
-  const openTasks = tasks.filter((task) => task.status !== "done").length;
+  const overdueCount = tasks.filter((task) => task.dueDate && task.status !== "concluida" && task.status !== "cancelada" && new Date(task.dueDate) < new Date()).length;
+  const openTasks = tasks.filter((task) => task.status !== "concluida" && task.status !== "cancelada").length;
   const wonClients = clients.filter((client) => client.stage === "won").length;
 
   return (
@@ -1159,12 +1073,12 @@ function WorkspaceSidebar({
 
       <div className="nav-section">
         <div className="nav-section-title">Spaces</div>
-        {["GRX Intelligence", "Roque Shop", "Visa X Consulting", "PsicoRed", "Coast Riviera"].map((space, index) => (
-          <button key={space} className="space-item-button" onClick={() => onNavigate(index === 0 ? "board" : "clients")}>
-            <div className="space-avatar" style={{ background: ["#10b981", "#ea580c", "#ec4899", "#0ea5e9", "#6366f1"][index] }}>
-              {space[0]}
+        {clients.map((client, index) => (
+          <button key={client.id} className="space-item-button" onClick={() => onNavigate("board")}>
+            <div className="space-avatar" style={{ background: ["#10b981", "#ea580c", "#ec4899", "#0ea5e9", "#6366f1", "#8b5cf6", "#f43f5e"][index % 7] }}>
+              {client.name.substring(0, 2).toUpperCase()}
             </div>
-            <span>{space}</span>
+            <span>{client.name}</span>
           </button>
         ))}
       </div>
@@ -1205,7 +1119,7 @@ function BoardView({
   onStatusChange: (taskId: string, status: TaskStatus) => void;
   onNotify: (message: string) => void;
 }) {
-  const openTasks = allTasks.filter((task) => task.status !== "done").length;
+  const openTasks = allTasks.filter((task) => task.status !== "concluida" && task.status !== "cancelada").length;
 
   return (
     <main className="main-area">
@@ -1257,7 +1171,7 @@ function BoardView({
           <button className="btn-solid" onClick={onToggleClosed}>
             <Filter size={14} /> {showClosed ? "Ocultar concluidas" : "Mostrar concluidas"}
           </button>
-          <button className="btn-primary" onClick={() => onCreateTask("todo")}>
+          <button className="btn-primary" onClick={() => onCreateTask("a_fazer")}>
             <Plus size={14} /> Add Task
           </button>
         </div>
@@ -1922,9 +1836,9 @@ function DashboardsView({
   onAddCard: () => void;
   onDeleteCard: (cardId: string) => void;
 }) {
-  const openTasks = tasks.filter((task) => task.status !== "done").length;
-  const inProgress = tasks.filter((task) => task.status === "in_progress").length;
-  const completed = tasks.filter((task) => task.status === "done").length;
+  const openTasks = tasks.filter((task) => task.status !== "concluida" && task.status !== "cancelada").length;
+  const inProgress = tasks.filter((task) => task.status === "em_andamento").length;
+  const completed = tasks.filter((task) => task.status === "concluida").length;
   const pipeline = clients.reduce((sum, client) => sum + client.value, 0);
   const submissions = forms.reduce((sum, form) => sum + form.submissions.length, 0);
   const statusCounts = TASK_STATUSES.map((status) => tasks.filter((task) => task.status === status.id).length);
@@ -2204,7 +2118,7 @@ function TaskModal({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const task = modal.task;
-  const defaultStatus = task?.status ?? modal.status ?? "todo";
+  const defaultStatus = task?.status ?? modal.status ?? "a_fazer";
 
   return (
     <Modal title={modal.mode === "edit" ? "Editar tarefa" : "Nova tarefa"} onClose={onClose}>
