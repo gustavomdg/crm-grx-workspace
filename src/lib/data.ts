@@ -1,12 +1,12 @@
-import { CrmTask, ClientRecord, TeamMember, TaskStatus } from '../app/page';
+import { CrmTask, ClientRecord, TeamMember } from '../app/page';
 
-export const REAL_TEAM: any[] = [
+export const REAL_TEAM: TeamMember[] = [
   { id: "USR001", name: "Gustavo Roque", role: "CEO / Fundador", email: "gustavoroque@example.com", status: "online" },
   { id: "USR002", name: "Danielle", role: "Designer / Criativo", email: "danielle@example.com", status: "online" },
   { id: "USR003", name: "Leonardo Avallone", role: "Operações", email: "leonardoavallone@example.com", status: "online" },
 ];
 
-export const REAL_CLIENTS: any[] = [
+export const REAL_CLIENTS: ClientRecord[] = [
   { id: "CLI001", name: "Casa do Óleo", tipo: "Cliente", contact: "Contato Casa do Óleo", email: "contato@exemplo.com", phone: "(11) 99999-9999", stage: "won", value: 0, owner: "Gustavo Roque", notes: "Lista: Lista de tarefas Casa do Óleo", updatedAt: new Date().toISOString() },
   { id: "CLI002", name: "Delliz", tipo: "Cliente", contact: "Contato Delliz", email: "contato@exemplo.com", phone: "(11) 99999-9999", stage: "won", value: 0, owner: "Gustavo Roque", notes: "Lista: Lista de Tarefas Delliz", updatedAt: new Date().toISOString() },
   { id: "CLI003", name: "GRX (Agência)", tipo: "Agência", contact: "Contato GRX (Agência)", email: "contato@exemplo.com", phone: "(11) 99999-9999", stage: "won", value: 0, owner: "Gustavo Roque", notes: "Lista: Tarefas GRX", updatedAt: new Date().toISOString() },
@@ -27,7 +27,7 @@ export const REAL_CLIENTS: any[] = [
   { id: "CLI018", name: "Shopee", tipo: "Cliente", contact: "Contato Shopee", email: "contato@exemplo.com", phone: "(11) 99999-9999", stage: "won", value: 0, owner: "Gustavo Roque", notes: "Lista: Tarefas Shopee", updatedAt: new Date().toISOString() },
 ];
 
-export const REAL_TASKS: any[] = [
+export const REAL_TASKS: CrmTask[] = [
   { id: "86ahtkp0n", title: "Carregar conta", client: "Casa do Óleo", assignee: "Gustavo Roque", status: "a_fazer", priority: "medium", dueDate: "2026-06-05", description: "", tag: "ClickUp", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), comments: [], clickupUrl: "https://app.clickup.com/t/86ahtkp0n" },
   { id: "86ahtknr6", title: "Enviar relatório", client: "Casa do Óleo", assignee: "Gustavo Roque", status: "a_fazer", priority: "medium", dueDate: "2026-06-05", description: "", tag: "ClickUp", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), comments: [], clickupUrl: "https://app.clickup.com/t/86ahtknr6" },
   { id: "86ahec615", title: "Fazer Analise Do ano todo", client: "Casa do Óleo", assignee: "Gustavo Roque", status: "cancelada", priority: "medium", dueDate: "2026-05-15", description: "", tag: "ClickUp", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), comments: [], clickupUrl: "https://app.clickup.com/t/86ahec615" },

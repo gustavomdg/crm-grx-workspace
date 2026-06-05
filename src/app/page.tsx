@@ -1120,6 +1120,7 @@ function BoardView({
   onNotify: (message: string) => void;
 }) {
   const openTasks = allTasks.filter((task) => task.status !== "concluida" && task.status !== "cancelada").length;
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
   return (
     <main className="main-area">
@@ -1181,7 +1182,20 @@ function BoardView({
         {TASK_STATUSES.map((status) => {
           const statusTasks = tasks.filter((task) => task.status === status.id);
           return (
-            <div key={status.id} className="board-column">
+            <div 
+              key={status.id} 
+              className="board-column"
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.backgroundColor = 'var(--bg-hover)'; }}
+              onDragLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.currentTarget.style.backgroundColor = 'transparent';
+                if (draggedTaskId && draggedTaskId !== "") {
+                  onStatusChange(draggedTaskId, status.id);
+                  setDraggedTaskId(null);
+                }
+              }}
+            >
               <div className="column-header">
                 <div className="column-title">
                   <span className={`status-label ${status.className}`}>{status.label}</span>
@@ -1206,6 +1220,8 @@ function BoardView({
                     onDelete={() => onDeleteTask(task.id)}
                     onDuplicate={() => onDuplicateTask(task)}
                     onStatusChange={(nextStatus) => onStatusChange(task.id, nextStatus)}
+                    onDragStart={() => setDraggedTaskId(task.id)}
+                    onDragEnd={() => setDraggedTaskId(null)}
                   />
                 ))}
               </div>
@@ -1224,6 +1240,8 @@ function TaskCard({
   onDelete,
   onDuplicate,
   onStatusChange,
+  onDragStart,
+  onDragEnd,
 }: {
   task: CrmTask;
   onOpen: () => void;
@@ -1231,9 +1249,17 @@ function TaskCard({
   onDelete: () => void;
   onDuplicate: () => void;
   onStatusChange: (status: TaskStatus) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }) {
   return (
-    <article className="task-card" onClick={onOpen}>
+    <article 
+      className="task-card" 
+      onClick={onOpen}
+      draggable={!!onDragStart}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+    >
       <div className="card-row">
         <h3 className="task-title">{task.title}</h3>
         <button
