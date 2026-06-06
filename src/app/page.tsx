@@ -27,6 +27,7 @@ import {
   Inbox,
   LayoutDashboard,
   LayoutList,
+  LogOut,
   MessageSquare,
   MoreHorizontal,
   Phone,
@@ -970,6 +971,12 @@ function AppSidebar({
           <UserPlus size={22} strokeWidth={1.5} />
           <span>Invite</span>
         </button>
+        <form action="/auth/logout" method="POST">
+          <button className="app-icon" type="submit" title="Sair do sistema">
+            <LogOut size={22} strokeWidth={1.5} />
+            <span>Sair</span>
+          </button>
+        </form>
       </div>
     </nav>
   );
